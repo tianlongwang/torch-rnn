@@ -122,11 +122,19 @@ end
 
 
 function LM:encode_string(s)
-  local encoded = torch.LongTensor(#s)
-  for i = 1, #s do
-    local token = s:sub(i, i)
+  local i = 0
+  for token in s:gmatch("[%z\1-\127\194-\244][\128-\191]*")  do
+    i = i + 1
+  end
+  local encoded = torch.LongTensor(i)
+  print('length of s ' .. i)
+  for token in s:gmatch("[%z\1-\127\194-\244][\128-\191]*")  do
+--  for i = 1, #s do
+--    local token = s:sub(i, i)
+	print('token ' .. token)
     local idx = self.token_to_idx[token]
     assert(idx ~= nil, 'Got invalid idx')
+    print('idx '..idx)
     encoded[i] = idx
   end
   return encoded
@@ -134,12 +142,19 @@ end
 
 
 function LM:decode_string(encoded)
+  print('encoded')
+  print(encoded)
   assert(torch.isTensor(encoded) and encoded:dim() == 1)
   local s = ''
   for i = 1, encoded:size(1) do
     local idx = encoded[i]
     local token = self.idx_to_token[idx]
-    s = s .. token
+    print('token')
+    print(token)
+
+    if(token) then
+      s = s .. token
+    end
   end
   return s
 end
@@ -200,6 +215,8 @@ function LM:sample(kwargs)
   end
 
   self:resetStates()
+  print('sample')
+  print(sampled)
   return self:decode_string(sampled[1])
 end
 
